@@ -1,124 +1,77 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
-using System;
+﻿using System;
 using System.IO;
 using System.Threading.Tasks;
+using DependencyInjection.Extensions.Parameterization;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace DependencyInjection.Extensions.Parameterization.App
 {
-    class Program
+    public interface IService { }
+    public class ServiceA : IService { }
+    public class ServiceB : IService { }
+    public class ConfigSetting
     {
+        public string Name { get; set; }
+    }
+
+    public class App
+    {
+        private readonly IService serviceA;
+        private readonly IService serviceB;
+        private readonly string input;
+        private readonly IOptions<ConfigSetting> options;
+
+        public App(IService serviceA, IService serviceB, string input, IOptions<ConfigSetting> options)
+        {
+            this.serviceA = serviceA;
+            this.serviceB = serviceB;
+            this.input = input;
+            this.options = options;
+        }
+
+        public Task RunAsync(string[] args)
+        {
+            Console.WriteLine($"ServiceA: {serviceA}");
+            Console.WriteLine($"ServiceB: {serviceB}");
+            Console.WriteLine($"input: {input}");
+            if (options != null)
+            {
+                Console.WriteLine($"options: {options.Value.Name}");
+            }
+            return Task.CompletedTask;
+        }
+    }
+
+    public class Program
+    {
+        private static ServiceProvider BuildServiceProvider()
+        {
+            var configurationRoot = new ConfigurationBuilder()
+                .SetBasePath(Path.Combine(AppContext.BaseDirectory))
+                .AddJsonFile("appsettings.json", optional: false)
+                .Build();
+
+            return new ServiceCollection()
+                .AddSingleton(configurationRoot) // Optional registration, only used by `.Options<>`
+                .AddSingleton<ServiceA>()
+                .AddSingleton<ServiceB>()
+
+                .AddSingleton<App>(pb => pb
+                    .Type<ServiceA>()
+                    .Type<ServiceB>()
+                    .Options<ConfigSetting>("ConfigSetting2")
+                    .Value("inject parameter"))
+
+                .BuildServiceProvider();
+        }
+
         static async Task Main(string[] args)
         {
             var serviceProvider = BuildServiceProvider();
             var application = serviceProvider.GetRequiredService<App>();
             await application.RunAsync(args);
-        }
-
-        private static ServiceProvider BuildServiceProvider()
-        {
-            var builder = new ConfigurationBuilder()
-            .SetBasePath(Path.Combine(AppContext.BaseDirectory))
-            .AddJsonFile("appsettings.json", optional: false);
-
-            var configurationRoot = builder.Build();
-
-            return new ServiceCollection()
-                .Configure<ConfigSetting>(configurationRoot.GetSection(key: nameof(ConfigSetting)))
-                .AddSingleton(configurationRoot)
-                .AddSingleton<App>()
-                .AddSingleton<TestServiceA>()
-                .AddSingleton<TestServiceB>()
-                .AddSingleton<TestServiceC>()
-                .AddSingleton<ITest, TestServiceC>()
-                .AddSingleton<SubstituteWithServiceA>(pb => pb.Type<TestServiceA>())
-                .AddSingleton<SubstituteWithServiceB>(pb => pb.Type<TestServiceB>())
-                .AddSingleton<IServiceBase, SubstituteWithServiceAAndOptions>(pb => pb
-                    .Value("Injected string")
-                    .Options<ConfigSetting>("ConfigSetting2")
-                    .Type<TestServiceA>())
-                .BuildServiceProvider();
-        }
-    }
-
-    public class ConfigSetting
-    {
-        public string Name { get; set; }
-
-    }
-
-    public class TestServiceA : ITest
-    {
-        public TestServiceA(IOptions<ConfigSetting> bla)
-        {
-            Console.WriteLine("TestServiceA: " + GetHashCode());
-        }
-    }
-
-    public class TestServiceB : ITest
-    {
-        public TestServiceB()
-        {
-            Console.WriteLine("TestServiceB: " + GetHashCode());
-        }
-    }
-
-    public class TestServiceC : ITest
-    {
-        public TestServiceC()
-        {
-            Console.WriteLine("TestServiceC: " + GetHashCode());
-        }
-    }
-
-    public interface ITest
-    {
-    }
-
-    public class SubstituteWithServiceB
-    {
-        public SubstituteWithServiceB(ITest test)
-        {
-            Console.WriteLine("SubstituteWithServiceB:" + test);
-        }
-    }
-
-    public class SubstituteWithServiceA
-    {
-        public SubstituteWithServiceA(ITest test)
-        {
-            Console.WriteLine("SubstituteWithServiceA:" + test);
-        }
-    }
-
-    public class SubstituteWithServiceC : IServiceBase
-    {
-        public SubstituteWithServiceC(ITest test)
-        {
-            Console.WriteLine("SubstituteWithServiceC:" + test);
-        }
-    }
-    public class SubstituteWithServiceAAndOptions : IServiceBase
-    {
-        public SubstituteWithServiceAAndOptions(ITest test, string input, IOptions<ConfigSetting> configSettings2)
-        {
-            Console.WriteLine("SubstituteWithServiceAAndOptions:" + test);
-        }
-    }
-    public interface IServiceBase
-    {
-    }
-
-    public class App
-    {
-        public App(ITest test, SubstituteWithServiceA substituteWithServiceA, SubstituteWithServiceB substituteWithServiceB, IServiceBase serviceBase, SubstituteWithServiceB substituteWithServiceB2)
-        {
-        }
-
-        public async Task RunAsync(string[] args)
-        {
-            await Task.Delay(0);
         }
     }
 }
