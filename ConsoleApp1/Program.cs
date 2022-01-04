@@ -1,30 +1,4 @@
-# DependencyInjection.Extensions.Parameterization
-
-This package allows you to register parameters for Microsoft.Extensions.DependencyInjection.
-It works like this:
-
-```csharp
-// Register
-.AddSingleton<App>(pb => pb
-    .Type<ServiceA>()
-    .Type<ServiceB>()
-    .Value("inject parameter"))
-  
-// Usage
-public App(IService serviceA, IService serviceB, string input)
-{
-    serviceA // ServiceA
-    serviceB // ServiceB
-    input // inject parameter
-}
-```
-
-It supports `Singleton`, `Scoped` and `Transient` lifetime scopes. It also provides functionality to inject `IOptions<>` with a custom key.
-
-
-Here is a full example:
-```csharp
-using System;
+﻿using System;
 using System.IO;
 using System.Threading.Tasks;
 using DependencyInjection.Extensions.Parameterization;
@@ -47,6 +21,7 @@ namespace ConsoleApp1
         private readonly IService serviceB;
         private readonly string input;
         private readonly IOptions<ConfigSetting> options;
+        private readonly IOptions<ConfigSetting> options2;
 
         public App(IService serviceA, IService serviceB, string input, IOptions<ConfigSetting> options)
         {
@@ -100,4 +75,3 @@ namespace ConsoleApp1
         }
     }
 }
-```
