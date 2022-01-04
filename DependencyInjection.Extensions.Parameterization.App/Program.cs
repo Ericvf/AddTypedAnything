@@ -24,11 +24,9 @@ namespace DependencyInjection.Extensions.Parameterization.App
 
             var configurationRoot = builder.Build();
 
-            var configSetting2 = new ConfigSetting();
-            configurationRoot.Bind("ConfigSetting2", configSetting2);
-
             return new ServiceCollection()
                 .Configure<ConfigSetting>(configurationRoot.GetSection(key: nameof(ConfigSetting)))
+                .AddSingleton(configurationRoot)
                 .AddSingleton<App>()
                 .AddSingleton<TestServiceA>()
                 .AddSingleton<TestServiceB>()
@@ -38,7 +36,7 @@ namespace DependencyInjection.Extensions.Parameterization.App
                 .AddSingleton<SubstituteWithServiceB>(pb => pb.Type<TestServiceB>())
                 .AddSingleton<IServiceBase, SubstituteWithServiceAAndOptions>(pb => pb
                     .Value("Injected string")
-                    .Value(Options.Create(configSetting2))
+                    .Options<ConfigSetting>("ConfigSetting2")
                     .Type<TestServiceA>())
                 .BuildServiceProvider();
         }

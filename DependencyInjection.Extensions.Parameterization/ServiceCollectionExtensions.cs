@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,6 +24,11 @@ namespace DependencyInjection.Extensions.Parameterization
             public Type ImplementationType { get; set; }
         }
 
+        private class OptionsParameter : IParameter
+        {
+            public Func<IConfigurationRoot, object> OptionFactory { get; set; }
+        }
+
         public ParameterBuilder Value(object obj)
         {
             parameters.Add(new ValueParameter()
@@ -41,8 +47,25 @@ namespace DependencyInjection.Extensions.Parameterization
             return this;
         }
 
+        public ParameterBuilder Options<TImplementation>(string key)
+            where TImplementation : class, new()
+        {
+            parameters.Add(new OptionsParameter()
+            {
+                OptionFactory = (configurationRoot) => {
+                    var instance = new TImplementation();
+                    configurationRoot.Bind(key, instance);
+                    return Microsoft.Extensions.Options.Options.Create(instance);
+                }
+
+            });
+            return this;
+        }
+
         public IEnumerable<object> Build(IServiceProvider serviceProvider)
         {
+            var configurationRoot = serviceProvider.GetRequiredService<IConfigurationRoot>();
+
             foreach (var item in parameters)
             {
                 switch (item)
@@ -53,6 +76,10 @@ namespace DependencyInjection.Extensions.Parameterization
 
                     case TypeParameter typeParameter:
                         yield return serviceProvider.GetRequiredService(typeParameter.ImplementationType);
+                        break;
+
+                    case OptionsParameter optionsParameter:
+                        yield return optionsParameter.OptionFactory(configurationRoot);
                         break;
                 }
             }
