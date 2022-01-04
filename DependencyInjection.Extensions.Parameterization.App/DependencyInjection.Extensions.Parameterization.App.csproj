@@ -14,7 +14,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\AddTypedAnything\AddTypedAnything.csproj" />
+	  <ProjectReference Include="..\DependencyInjection.Extensions.Parameterization\DependencyInjection.Extensions.Parameterization.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -5,7 +5,7 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace AddTypedAnything
+namespace DependencyInjection.Extensions.Parameterization.App
 {
     class Program
     {

@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+
+	  <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+	  <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+	  <Version>1.0.0</Version>
+	  <Authors>Ericvf</Authors>
+	  <Company>Appbyfex</Company>
+	  <Description>Microsoft.Extensions.DependencyInjection extensions for parameterization</Description>
+	  <PackageLicenseFile>LICENSE</PackageLicenseFile>
+	  <PackageReleaseNotes></PackageReleaseNotes>
+	  <RepositoryUrl>https://github.com/Ericvf/DependencyInjection.Extensions.Parameterization</RepositoryUrl>
+	  <PackageProjectUrl>https://github.com/Ericvf/DependencyInjection.Extensions.Parameterization</PackageProjectUrl>
+	  
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.2" />
+  </ItemGroup>
+	
+	<ItemGroup>
+		<None Include="..\LICENSE">
+			<Pack>True</Pack>
+			<PackagePath></PackagePath>
+		</None>
+	</ItemGroup>
+</Project>

@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace AddTypedAnything
+namespace DependencyInjection.Extensions.Parameterization
 {
     public class ParameterBuilder
     {
