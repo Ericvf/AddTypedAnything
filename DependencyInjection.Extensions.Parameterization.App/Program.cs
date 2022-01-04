@@ -48,13 +48,13 @@ namespace DependencyInjection.Extensions.Parameterization.App
     {
         private static ServiceProvider BuildServiceProvider()
         {
-            var configurationRoot = new ConfigurationBuilder()
+            var configuration = new ConfigurationBuilder()
                 .SetBasePath(Path.Combine(AppContext.BaseDirectory))
                 .AddJsonFile("appsettings.json", optional: false)
                 .Build();
 
             return new ServiceCollection()
-                .AddSingleton(configurationRoot) // Optional registration, only used by `.Options<>`
+                .AddSingleton<IConfiguration>(configuration) // Optional registration, only used by `.Options<>`
                 .AddSingleton<ServiceA>()
                 .AddSingleton<ServiceB>()
 

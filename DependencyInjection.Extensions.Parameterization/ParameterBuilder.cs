@@ -25,7 +25,7 @@ namespace DependencyInjection.Extensions.Parameterization
 
         private class OptionsParameter : IParameter
         {
-            public Func<IConfigurationRoot, object> OptionFactory { get; set; }
+            public Func<IConfiguration, object> OptionFactory { get; set; }
         }
 
         public ParameterBuilder Value(object obj)
@@ -51,9 +51,9 @@ namespace DependencyInjection.Extensions.Parameterization
         {
             parameters.Add(new OptionsParameter()
             {
-                OptionFactory = (configurationRoot) => {
+                OptionFactory = (configuration) => {
                     var instance = new TImplementation();
-                    configurationRoot.Bind(key, instance);
+                    configuration.Bind(key, instance);
                     return Microsoft.Extensions.Options.Options.Create(instance);
                 }
 
@@ -63,7 +63,7 @@ namespace DependencyInjection.Extensions.Parameterization
 
         public IEnumerable<object> Build(IServiceProvider serviceProvider)
         {
-            var configurationRoot = new Lazy<IConfigurationRoot>(() => serviceProvider.GetRequiredService<IConfigurationRoot>());
+            var configuration = new Lazy<IConfiguration>(() => serviceProvider.GetRequiredService<IConfiguration>());
 
             foreach (var item in parameters)
             {
@@ -78,7 +78,7 @@ namespace DependencyInjection.Extensions.Parameterization
                         break;
 
                     case OptionsParameter optionsParameter:
-                        yield return optionsParameter.OptionFactory(configurationRoot.Value);
+                        yield return optionsParameter.OptionFactory(configuration.Value);
                         break;
                 }
             }
