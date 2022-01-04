@@ -64,7 +64,7 @@ namespace DependencyInjection.Extensions.Parameterization
 
         public IEnumerable<object> Build(IServiceProvider serviceProvider)
         {
-            var configurationRoot = serviceProvider.GetRequiredService<IConfigurationRoot>();
+            var configurationRoot = new Lazy<IConfigurationRoot>(() => serviceProvider.GetRequiredService<IConfigurationRoot>());
 
             foreach (var item in parameters)
             {
@@ -79,7 +79,7 @@ namespace DependencyInjection.Extensions.Parameterization
                         break;
 
                     case OptionsParameter optionsParameter:
-                        yield return optionsParameter.OptionFactory(configurationRoot);
+                        yield return optionsParameter.OptionFactory(configurationRoot.Value);
                         break;
                 }
             }
