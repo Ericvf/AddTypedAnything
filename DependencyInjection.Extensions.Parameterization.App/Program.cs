@@ -1,10 +1,10 @@
-﻿using System;
-using System.IO;
-using System.Threading.Tasks;
-using DependencyInjection.Extensions.Parameterization;
+﻿using DependencyInjection.Extensions.Parameterization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using System;
+using System.IO;
+using System.Threading.Tasks;
 
 namespace DependencyInjection.Extensions.Parameterization.App
 {
@@ -30,6 +30,7 @@ namespace DependencyInjection.Extensions.Parameterization.App
 
     public interface ICustomerRepo
     {
+        public string Id { get; }
     }
 
     public class CustomerRepo : ICustomerRepo
@@ -37,15 +38,59 @@ namespace DependencyInjection.Extensions.Parameterization.App
         public CustomerRepo(IDatabaseClient client, string parameter)
         {
             Console.WriteLine("Customerrepo: " + parameter);
+            Id = parameter;
         }
+
+        public string Id { get; }
     }
 
     public interface IDataMigrationService { }
+
     public class DataMigrationService : IDataMigrationService {
 
         public DataMigrationService(ICustomerRepo source, ICustomerRepo destination)
         {
+            Console.WriteLine($"DataMigrationService: source {source.Id} - destination {destination.Id}");
+        }
+    }
 
+    public interface IClient
+
+    {
+        public string ConnectionString { get; set; }
+    }
+
+    public class Client : IClient
+    {
+        public string ConnectionString { get; set; }
+    }
+
+    public interface IClientFactory<T>
+        where T : IClient
+    {
+        T CreateClient(string connectionString);
+    }
+
+    public class ClientFactory<T> : IClientFactory<T>
+        where T : IClient, new()
+    {
+        public T CreateClient(string connectionString)
+        {
+            var client = new T();
+            client.ConnectionString = connectionString;
+            return client;
+        }
+    }
+
+    public interface IClientService
+    {
+    }
+
+    public class ClientService : IClientService
+    {
+        public ClientService(IClient client)
+        {
+            Console.WriteLine($"ClientService: client connection {client.ConnectionString}");
         }
     }
 
@@ -56,14 +101,16 @@ namespace DependencyInjection.Extensions.Parameterization.App
         private readonly string input;
         private readonly IOptions<ConfigSetting> options;
         private readonly IDataMigrationService dataMigrationService;
+        private readonly IClientService clientService;
 
-        public App(IService serviceA, IService serviceB, string input, IOptions<ConfigSetting> options, IDataMigrationService dataMigrationService)
+        public App(IService serviceA, IService serviceB, string input, IOptions<ConfigSetting> options, IDataMigrationService dataMigrationService, IClientService clientService)
         {
             this.serviceA = serviceA;
             this.serviceB = serviceB;
             this.input = input;
             this.options = options;
             this.dataMigrationService = dataMigrationService;
+            this.clientService = clientService;
         }
 
         public Task RunAsync(string[] args)
@@ -94,6 +141,11 @@ namespace DependencyInjection.Extensions.Parameterization.App
                 .AddSingleton<ServiceB>()
                 .AddSingleton<IDatabaseClient, DatabaseClient>()
                 .AddSingleton<ICustomerRepo, CustomerRepo>()
+                .AddSingleton<IClientFactory<Client>, ClientFactory<Client>>()
+
+                .AddSingleton<IClientService, ClientService>(pb => pb
+                    .Factory(serviceProvider => serviceProvider.GetRequiredService<IClientFactory<Client>>()
+                        .CreateClient("connection1")))
 
                 .AddSingleton<IDataMigrationService, DataMigrationService>(pb => pb
                     .Type<CustomerRepo>(pb => pb

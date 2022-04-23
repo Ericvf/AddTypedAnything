@@ -28,6 +28,18 @@ namespace DependencyInjection.Extensions.Parameterization
             public Action<ParameterBuilder> ParameterBuilder { get; set; }
         }
 
+        public class FactoryParameter<ImplementationType> : FactoryParameter
+        {
+            public Func<IServiceProvider, ImplementationType> ImplementationFactory { get; set; }
+
+            public override object Resolve(IServiceProvider serviceProvider) => ImplementationFactory(serviceProvider);
+        }
+
+        public abstract class FactoryParameter : IParameter
+        {
+            public abstract object Resolve(IServiceProvider serviceProvider);
+        }
+
         private class OptionsParameter : IParameter
         {
             public Func<IConfiguration, object> OptionFactory { get; set; }
@@ -48,6 +60,16 @@ namespace DependencyInjection.Extensions.Parameterization
             {
                 ImplementationType = typeof(TImplementation),
                 ParameterBuilder = parameterBuilder,
+            });
+
+            return this;
+        }
+
+        public ParameterBuilder Factory<TImplementation>(Func<IServiceProvider, TImplementation> implementationFactory)
+        {
+            parameters.Add(new FactoryParameter<TImplementation>()
+            {
+                ImplementationFactory = implementationFactory,
             });
 
             return this;
@@ -104,6 +126,10 @@ namespace DependencyInjection.Extensions.Parameterization
                         {
                             yield return serviceProvider.GetRequiredService(typeParameter.ImplementationType);
                         }
+                        break;
+
+                    case FactoryParameter factoryParameter:
+                        yield return factoryParameter.Resolve(serviceProvider);
                         break;
 
                     case OptionsParameter optionsParameter:
