@@ -28,14 +28,14 @@ namespace DependencyInjection.Extensions.Parameterization
             public Action<ParameterBuilder> ParameterBuilder { get; set; }
         }
 
-        public class FactoryParameter<ImplementationType> : FactoryParameter
+        private class FactoryParameter<ImplementationType> : FactoryParameter
         {
             public Func<IServiceProvider, ImplementationType> ImplementationFactory { get; set; }
 
             public override object Resolve(IServiceProvider serviceProvider) => ImplementationFactory(serviceProvider);
         }
 
-        public abstract class FactoryParameter : IParameter
+        private abstract class FactoryParameter : IParameter
         {
             public abstract object Resolve(IServiceProvider serviceProvider);
         }
@@ -70,18 +70,6 @@ namespace DependencyInjection.Extensions.Parameterization
             parameters.Add(new FactoryParameter<TImplementation>()
             {
                 ImplementationFactory = implementationFactory,
-            });
-
-            return this;
-        }
-
-        public ParameterBuilder Type<TService, TImplementation>(Action<ParameterBuilder> parameterBuilder = null)
-        {
-            parameters.Add(new TypeParameter()
-            {
-                ServiceType = typeof(TService),
-                ImplementationType = typeof(TImplementation),
-                ParameterBuilder = parameterBuilder,
             });
 
             return this;

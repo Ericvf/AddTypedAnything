@@ -147,11 +147,11 @@ namespace DependencyInjection.Extensions.Parameterization.App
                
                 .AddSingleton<IDataMigrationService, DataMigrationService>(pb => pb
                     .Type<CustomerRepo>(pb => pb
-                        .Type<IDatabaseClient, DatabaseClient>(pb2 => pb2.Value("connection1"))
+                        .Type<DatabaseClient>(pb2 => pb2.Value("connection1"))
                         .Value("inject parameter1"))
 
                     .Type<CustomerRepo>(pb => pb
-                        .Type<IDatabaseClient, DatabaseClient>(pb2 => pb2.Value("connection2"))
+                        .Type<DatabaseClient>(pb2 => pb2.Value("connection2"))
                         .Value("inject parameter2"))
                 )
 
@@ -160,8 +160,8 @@ namespace DependencyInjection.Extensions.Parameterization.App
                     .Type<ServiceB>()
                     .Options<ConfigSetting>("ConfigSetting2")
                     .Value("inject parameter")
-                    .Type<IClientService, ClientService>(pb => pb.AddServiceClient<Client>("ConnectionString1"))
-                    .Type<IClientService, ClientService>(pb => pb.AddServiceClient<Client>("ConnectionString2")))
+                    .Type<ClientService>(pb => pb.AddServiceClient<Client>("ConnectionString1"))
+                    .Type<ClientService>(pb => pb.AddServiceClient<Client>("ConnectionString2")))
                 .BuildServiceProvider();
         }
 
