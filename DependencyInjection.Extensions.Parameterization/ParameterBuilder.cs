@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace DependencyInjection.Extensions.Parameterization
 {
@@ -20,7 +21,11 @@ namespace DependencyInjection.Extensions.Parameterization
 
         private class TypeParameter : IParameter
         {
+            public Type ServiceType { get; set; }
+
             public Type ImplementationType { get; set; }
+
+            public Action<ParameterBuilder> ParameterBuilder { get; set; }
         }
 
         private class OptionsParameter : IParameter
@@ -37,12 +42,26 @@ namespace DependencyInjection.Extensions.Parameterization
             return this;
         }
 
-        public ParameterBuilder Type<TImplementation>()
+        public ParameterBuilder Type<TImplementation>(Action<ParameterBuilder> parameterBuilder = null)
         {
             parameters.Add(new TypeParameter()
             {
-                ImplementationType = typeof(TImplementation)
+                ImplementationType = typeof(TImplementation),
+                ParameterBuilder = parameterBuilder,
             });
+
+            return this;
+        }
+
+        public ParameterBuilder Type<TService, TImplementation>(Action<ParameterBuilder> parameterBuilder = null)
+        {
+            parameters.Add(new TypeParameter()
+            {
+                ServiceType = typeof(TService),
+                ImplementationType = typeof(TImplementation),
+                ParameterBuilder = parameterBuilder,
+            });
+
             return this;
         }
 
@@ -51,12 +70,12 @@ namespace DependencyInjection.Extensions.Parameterization
         {
             parameters.Add(new OptionsParameter()
             {
-                OptionFactory = (configuration) => {
+                OptionFactory = (configuration) =>
+                {
                     var instance = new TImplementation();
                     configuration.Bind(key, instance);
                     return Microsoft.Extensions.Options.Options.Create(instance);
                 }
-
             });
             return this;
         }
@@ -74,7 +93,17 @@ namespace DependencyInjection.Extensions.Parameterization
                         break;
 
                     case TypeParameter typeParameter:
-                        yield return serviceProvider.GetRequiredService(typeParameter.ImplementationType);
+                        if (typeParameter.ParameterBuilder != null)
+                        {
+                            var parameterBuilder = new ParameterBuilder();
+                            typeParameter.ParameterBuilder(parameterBuilder);
+                            var parameters = parameterBuilder.Build(serviceProvider).ToArray();
+                            yield return ActivatorUtilities.CreateInstance(serviceProvider, typeParameter.ImplementationType ?? typeParameter.ServiceType, parameters);
+                        }
+                        else
+                        {
+                            yield return serviceProvider.GetRequiredService(typeParameter.ImplementationType);
+                        }
                         break;
 
                     case OptionsParameter optionsParameter:

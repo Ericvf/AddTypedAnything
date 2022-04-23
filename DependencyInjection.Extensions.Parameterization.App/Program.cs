@@ -16,19 +16,54 @@ namespace DependencyInjection.Extensions.Parameterization.App
         public string Name { get; set; }
     }
 
+    public interface IDatabaseClient
+    {
+    }
+
+    public class DatabaseClient : IDatabaseClient
+    {
+        public DatabaseClient(string clientName)
+        {
+            Console.WriteLine("DatabaseClient:" + clientName);
+        }
+    }
+
+    public interface ICustomerRepo
+    {
+    }
+
+    public class CustomerRepo : ICustomerRepo
+    {
+        public CustomerRepo(IDatabaseClient client, string parameter)
+        {
+            Console.WriteLine("Customerrepo: " + parameter);
+        }
+    }
+
+    public interface IDataMigrationService { }
+    public class DataMigrationService : IDataMigrationService {
+
+        public DataMigrationService(ICustomerRepo source, ICustomerRepo destination)
+        {
+
+        }
+    }
+
     public class App
     {
         private readonly IService serviceA;
         private readonly IService serviceB;
         private readonly string input;
         private readonly IOptions<ConfigSetting> options;
+        private readonly IDataMigrationService dataMigrationService;
 
-        public App(IService serviceA, IService serviceB, string input, IOptions<ConfigSetting> options)
+        public App(IService serviceA, IService serviceB, string input, IOptions<ConfigSetting> options, IDataMigrationService dataMigrationService)
         {
             this.serviceA = serviceA;
             this.serviceB = serviceB;
             this.input = input;
             this.options = options;
+            this.dataMigrationService = dataMigrationService;
         }
 
         public Task RunAsync(string[] args)
@@ -57,6 +92,18 @@ namespace DependencyInjection.Extensions.Parameterization.App
                 .AddSingleton<IConfiguration>(configuration) // Optional registration, only used by `.Options<>`
                 .AddSingleton<ServiceA>()
                 .AddSingleton<ServiceB>()
+                .AddSingleton<IDatabaseClient, DatabaseClient>()
+                .AddSingleton<ICustomerRepo, CustomerRepo>()
+
+                .AddSingleton<IDataMigrationService, DataMigrationService>(pb => pb
+                    .Type<CustomerRepo>(pb => pb
+                        .Type<IDatabaseClient, DatabaseClient>(pb2 => pb2.Value("connection1"))
+                        .Value("inject parameter1"))
+
+                    .Type<CustomerRepo>(pb => pb
+                        .Type<IDatabaseClient, DatabaseClient>(pb2 => pb2.Value("connection2"))
+                        .Value("inject parameter2"))
+                )
 
                 .AddSingleton<App>(pb => pb
                     .Type<ServiceA>()
