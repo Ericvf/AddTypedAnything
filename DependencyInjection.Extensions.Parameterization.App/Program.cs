@@ -46,7 +46,8 @@ namespace DependencyInjection.Extensions.Parameterization.App
 
     public interface IDataMigrationService { }
 
-    public class DataMigrationService : IDataMigrationService {
+    public class DataMigrationService : IDataMigrationService
+    {
 
         public DataMigrationService(ICustomerRepo source, ICustomerRepo destination)
         {
@@ -103,7 +104,7 @@ namespace DependencyInjection.Extensions.Parameterization.App
         private readonly IDataMigrationService dataMigrationService;
         private readonly IClientService clientService;
 
-        public App(IService serviceA, IService serviceB, string input, IOptions<ConfigSetting> options, IDataMigrationService dataMigrationService, IClientService clientService)
+        public App(IService serviceA, IService serviceB, string input, IOptions<ConfigSetting> options, IDataMigrationService dataMigrationService, IClientService clientService, IClientService clientService2)
         {
             this.serviceA = serviceA;
             this.serviceB = serviceB;
@@ -143,10 +144,7 @@ namespace DependencyInjection.Extensions.Parameterization.App
                 .AddSingleton<ICustomerRepo, CustomerRepo>()
                 .AddSingleton<IClientFactory<Client>, ClientFactory<Client>>()
 
-                .AddSingleton<IClientService, ClientService>(pb => pb
-                    .Factory(serviceProvider => serviceProvider.GetRequiredService<IClientFactory<Client>>()
-                        .CreateClient("connection1")))
-
+               
                 .AddSingleton<IDataMigrationService, DataMigrationService>(pb => pb
                     .Type<CustomerRepo>(pb => pb
                         .Type<IDatabaseClient, DatabaseClient>(pb2 => pb2.Value("connection1"))
@@ -161,8 +159,9 @@ namespace DependencyInjection.Extensions.Parameterization.App
                     .Type<ServiceA>()
                     .Type<ServiceB>()
                     .Options<ConfigSetting>("ConfigSetting2")
-                    .Value("inject parameter"))
-
+                    .Value("inject parameter")
+                    .Type<IClientService, ClientService>(pb => pb.AddServiceClient<Client>("ConnectionString1"))
+                    .Type<IClientService, ClientService>(pb => pb.AddServiceClient<Client>("ConnectionString2")))
                 .BuildServiceProvider();
         }
 
@@ -172,5 +171,13 @@ namespace DependencyInjection.Extensions.Parameterization.App
             var application = serviceProvider.GetRequiredService<App>();
             await application.RunAsync(args);
         }
+    }
+
+    public static class ParameterBuilderExtensions
+    {
+        public static ParameterBuilder AddServiceClient<TClient>(this ParameterBuilder parameterBuilder, string connectionString) where TClient : IClient
+            => parameterBuilder.Factory(serviceProvider => serviceProvider
+                .GetRequiredService<IClientFactory<TClient>>()
+                .CreateClient(connectionString));
     }
 }
