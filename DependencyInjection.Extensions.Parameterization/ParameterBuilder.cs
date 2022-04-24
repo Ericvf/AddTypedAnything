@@ -54,7 +54,13 @@ namespace DependencyInjection.Extensions.Parameterization
             return this;
         }
 
-        public ParameterBuilder Type<TImplementation>(Action<ParameterBuilder> parameterBuilder = null)
+        public ParameterBuilder Type<TImplementation>()
+        {
+            Activate<TImplementation>(null);
+            return this;
+        }
+
+        public ParameterBuilder Activate<TImplementation>(Action<ParameterBuilder> parameterBuilder = null)
         {
             parameters.Add(new TypeParameter()
             {
@@ -93,6 +99,7 @@ namespace DependencyInjection.Extensions.Parameterization
         public IEnumerable<object> Build(IServiceProvider serviceProvider)
         {
             var configuration = new Lazy<IConfiguration>(() => serviceProvider.GetRequiredService<IConfiguration>());
+            var activatorFactory = new Lazy<IActivatorFactory>(() => serviceProvider.GetRequiredService<IActivatorFactory>());
 
             foreach (var item in parameters)
             {
@@ -108,7 +115,7 @@ namespace DependencyInjection.Extensions.Parameterization
                             var parameterBuilder = new ParameterBuilder();
                             typeParameter.ParameterBuilder(parameterBuilder);
                             var parameters = parameterBuilder.Build(serviceProvider).ToArray();
-                            yield return ActivatorUtilities.CreateInstance(serviceProvider, typeParameter.ImplementationType ?? typeParameter.ServiceType, parameters);
+                            yield return activatorFactory.Value.CreateInstance(typeParameter.ImplementationType ?? typeParameter.ServiceType, parameters);
                         }
                         else
                         {

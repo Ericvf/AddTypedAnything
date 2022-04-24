@@ -39,8 +39,8 @@ namespace DependencyInjection.Extensions.Parameterization
         {
             var parameterBuilder = new ParameterBuilder();
             builder(parameterBuilder);
-            var parameters = parameterBuilder.Build(serviceProvider);
-            return ActivatorUtilities.CreateInstance<TTargetImplementation>(serviceProvider, parameters.ToArray());
+            var parameters = parameterBuilder.Build(serviceProvider).ToArray();
+            return ActivatorUtilities.CreateInstance<TTargetImplementation>(serviceProvider, parameters);
         }
     }
 }
