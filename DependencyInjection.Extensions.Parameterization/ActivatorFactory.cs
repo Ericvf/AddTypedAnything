@@ -29,5 +29,13 @@ namespace DependencyInjection.Extensions.Parameterization
             while (activatedInstances.TryPop(out var disposable))
                 disposable.Dispose();
         }
+
+        public object RegisterInstance(object instance)
+        {
+            if (instance is IDisposable disposable)
+                activatedInstances.Push(disposable);
+
+            return instance;
+        }
     }
 }

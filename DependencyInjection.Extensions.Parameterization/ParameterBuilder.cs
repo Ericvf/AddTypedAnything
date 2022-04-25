@@ -121,10 +121,11 @@ namespace DependencyInjection.Extensions.Parameterization
                         {
                             yield return serviceProvider.GetRequiredService(typeParameter.ImplementationType);
                         }
-                        break;
+                        break; 
 
                     case FactoryParameter factoryParameter:
-                        yield return factoryParameter.Resolve(serviceProvider);
+                        var factoryInstance = factoryParameter.Resolve(serviceProvider);
+                        yield return activatorFactory.Value.RegisterInstance(factoryInstance);
                         break;
 
                     case OptionsParameter optionsParameter:

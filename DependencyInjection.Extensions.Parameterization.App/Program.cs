@@ -90,6 +90,8 @@ namespace DependencyInjection.Extensions.Parameterization.App
         {
             var client = new T();
             client.ConnectionString = connectionString;
+            Console.WriteLine("client:" + connectionString);
+
             return client;
         }
     }
@@ -125,7 +127,7 @@ namespace DependencyInjection.Extensions.Parameterization.App
         private readonly IClientService clientService;
         private readonly IClientService clientService2;
 
-        public App(IService serviceA, IService serviceB, string input, IOptions<ConfigSetting> options, IDataMigrationService dataMigrationService, IClientService clientService, IClientService clientService2)
+        public App(IService serviceA, IService serviceB, string input, IOptions<ConfigSetting> options, IDataMigrationService dataMigrationService, IClientService clientService, IClientService clientService2, Client client)
         {
             this.serviceA = serviceA;
             this.serviceB = serviceB;
@@ -190,12 +192,16 @@ namespace DependencyInjection.Extensions.Parameterization.App
                 )
 
                 .AddTransient<App>(pb => pb
-                    .Type<ServiceA>()
-                    .Type<ServiceB>()
-                    .Options<ConfigSetting>("ConfigSetting2")
-                    .Value("inject parameter")
-                    .Activate<ClientService>(pb => pb.AddServiceClient<Client>("ConnectionString1"))
-                    .Activate<ClientService>(pb => pb.AddServiceClient<Client>("ConnectionString2")))
+                    .Type<ServiceA>() // Inject ServiceA into IService
+                    .Type<ServiceB>() // Inject ServiceB into IService
+                    .Options<ConfigSetting>("ConfigSetting2") // Inject ConfigSetting from key=ConfigSetting2
+                    .Value("inject parameter") // Literal injection
+                    .Activate<ClientService>(pb => pb.AddServiceClient<Client>("ConnectionString1"))  // Factory method inside an extension method
+                    .Activate<ClientService>(pb => pb.AddServiceClient<Client>("ConnectionString2"))  // Factory method inside an extension method
+                    .Factory(serviceProvider => serviceProvider.GetRequiredService<IClientFactory<Client>>().CreateClient("factoryinjector"))
+                    ) 
+
+
                 .BuildServiceProvider();
         }
 
