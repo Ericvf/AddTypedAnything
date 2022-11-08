@@ -5,7 +5,7 @@
 
 	  <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 	  <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-	  <Version>1.0.3</Version>
+	  <Version>1.0.5</Version>
 	  <Authors>Ericvf</Authors>
 	  <Company>Appbyfex</Company>
 	  <Description>Microsoft.Extensions.DependencyInjection extensions for parameterization</Description>
